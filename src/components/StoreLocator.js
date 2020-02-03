@@ -54,7 +54,7 @@ export class StoreLocator extends Component {
   async loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
     return loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&libraries=geometry,places`
+      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&libraries=places`
     );
   }
 
