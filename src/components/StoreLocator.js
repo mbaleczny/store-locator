@@ -179,24 +179,24 @@ export class StoreLocator extends Component {
       streetViewControl: false,
       fullscreenControl: false
     });
-    this.distanceService = new google.maps.DistanceMatrixService();
-    const geocoder = new google.maps.Geocoder();
+    // this.distanceService = new google.maps.DistanceMatrixService();
+    // const geocoder = new google.maps.Geocoder();
     this.setupAutocomplete();
     this.state.stores.map(this.addStoreMarker);
     const location = await getUserLocation();
     this.setState({searchLocation: location});
-    this.calculateDistance(location);
+    // this.calculateDistance(location);
     this.map.setCenter(location);
     this.map.setZoom(11);
     this.setHomeMarker(location);
 
-    geocoder.geocode({location: location}, (results, status) => {
-      if (status === 'OK') {
-        if (results[0]) {
-          this.input.value = results[0].formatted_address;
-        }
-      }
-    });
+    // geocoder.geocode({location: location}, (results, status) => {
+    //   if (status === 'OK') {
+    //     if (results[0]) {
+    //       this.input.value = results[0].formatted_address;
+    //     }
+    //   }
+    // });
   };
 
   setupAutocomplete() {
@@ -216,7 +216,7 @@ export class StoreLocator extends Component {
       const location = place.geometry.location.toJSON();
       this.setState({searchLocation: location});
       this.setHomeMarker(location);
-      this.calculateDistance(location);
+      // this.calculateDistance(location);
     });
   }
 
@@ -280,7 +280,8 @@ export class StoreLocator extends Component {
           {searchHint && <div className={classNames.searchHint}>{searchHint}</div>}
           <ul className={classNames.storesList}>
             {stores.map(store => {
-              const locationStr = `${store.location.lat},${store.location.lng}`;
+              if(store === undefined) return
+              const locationStr = `${store.lat},${store.lng}`;
               return (
                 <li
                   key={store.id}
