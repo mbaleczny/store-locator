@@ -6,6 +6,7 @@ import DirectionIcon from './DirectionIcon';
 import SearchIcon from './SearchIcon';
 import classNames from './StoreLocator.css';
 import WebIcon from './WebIcon';
+import MarkerClusterer from '@google/markerclustererplus';
 
 const travelModes = {
   DRIVING: 'car',
@@ -16,6 +17,103 @@ const units = {
   METRIC: 0,
   IMPERIAL: 1
 };
+
+const styles = [
+  [
+    MarkerClusterer.withDefaultStyle({
+      width: 35,
+      height: 35,
+      url: "../images/people35.png",
+      textColor: "#ff00ff",
+      textSize: 10
+    }),
+    MarkerClusterer.withDefaultStyle({
+      width: 45,
+      height: 45,
+      url: "../images/people45.png",
+      textColor: "#ff0000",
+      textSize: 11,
+    }),
+    MarkerClusterer.withDefaultStyle({
+      width: 55,
+      height: 55,
+      url: "../images/people55.png",
+      textColor: "#ffffff",
+      textSize: 12,
+    }),
+  ],
+  [
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/conv30.png',
+      width: 30,
+      height: 27,
+      anchorText: [-3, 0],
+      anchorIcon: [27, 28],
+      textColor: '#ff00ff',
+      textSize: 10,
+    }),
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/conv40.png',
+      width: 40,
+      height: 36,
+      anchorText: [-4, 0],
+      anchorIcon: [36, 37],
+      textColor: '#ff0000',
+      textSize: 11,
+    }),
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/conv50.png',
+      width: 50,
+      height: 45,
+      anchorText: [-5, 0],
+      anchorIcon: [45, 46],
+      textColor: '#0000ff',
+      textSize: 12,
+    }),
+  ],
+  [
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/heart30.png',
+      width: 30,
+      height: 26,
+      anchorIcon: [26, 15],
+      textColor: '#ff00ff',
+      textSize: 10,
+    }),
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/heart40.png',
+      width: 40,
+      height: 35,
+      anchorIcon: [35, 20],
+      textColor: '#ff0000',
+      textSize: 11,
+    }),
+    MarkerClusterer.withDefaultStyle({
+      url: '../images/heart50.png',
+      width: 50,
+      height: 44,
+      anchorIcon: [44, 25],
+      textSize: 12,
+    }),
+  ],
+  [
+    {
+      width: 30,
+      height: 30,
+      className: 'custom-clustericon-1'
+    },
+    {
+      width: 40,
+      height: 40,
+      className: 'custom-clustericon-2'
+    },
+    {
+      width: 50,
+      height: 50,
+      className: 'custom-clustericon-3'
+    }
+  ],
+];
 
 const toMiles = 1.609;
 
@@ -42,6 +140,7 @@ export class StoreLocator extends Component {
       stores: this.addStoreIds(props.stores)
     };
     this.markers = [];
+    this.markerClusterer = null;
   }
 
   addStoreIds(stores = []) {
@@ -54,11 +153,12 @@ export class StoreLocator extends Component {
   async loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
     return loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&libraries=places`
+      `https://maps.googleapis.com/maps/api/js?v=3&key=${this.props.apiKey}&libraries=geometry,places`
     );
   }
 
   loadStores = async searchLocation => {
+    console.log('loadStores', searchLocation)
     if (!this.props.loadStores) return this.state.stores;
     let stores = await this.props.loadStores(searchLocation);
     stores = this.addStoreIds(stores);
@@ -182,13 +282,16 @@ export class StoreLocator extends Component {
     // this.distanceService = new google.maps.DistanceMatrixService();
     // const geocoder = new google.maps.Geocoder();
     this.setupAutocomplete();
-    this.state.stores.map(this.addStoreMarker);
+    // this.state.stores.map(this.addStoreMarker);
+
+    this.refreshMap();
+
     const location = await getUserLocation();
     this.setState({searchLocation: location});
     // this.calculateDistance(location);
-    this.map.setCenter(location);
+    // this.map.setCenter(location);
     this.map.setZoom(11);
-    this.setHomeMarker(location);
+    // this.setHomeMarker(location);
 
     // geocoder.geocode({location: location}, (results, status) => {
     //   if (status === 'OK') {
@@ -198,6 +301,44 @@ export class StoreLocator extends Component {
     //   }
     // });
   };
+
+  refreshMap() {
+    if (this.markerClusterer) {
+      this.markerClusterer.clearMarkers();
+    }
+
+    let stores = this.state.stores;
+    var markers = [];
+    
+    for (var i = 0; i < stores.length; ++i) {
+      var marker = new google.maps.Marker({
+        position: stores[i].location,
+        title: stores[i].name,
+        map: this.map,
+        icon: this.getMarkerIcon(this.props.storeMarkerIcon)
+      });
+      markers.push(marker);
+    }
+
+    // var zoom = parseInt(document.getElementById("zoom").value, 10);
+    // var size = parseInt(document.getElementById("size").value, 10);
+    // var style = parseInt(document.getElementById("style").value, 10);
+    // zoom = zoom == -1 ? null : zoom;
+    // size = size == -1 ? null : size;
+    // style = style == -1 ? null : style;
+    let zoom = 16;
+    let size = null;
+    let style = 3;
+
+    console.log('markers', markers)
+
+    this.markerClusterer = new MarkerClusterer(this.map, markers, {
+      maxZoom: zoom,
+      gridSize: size,
+      styles: styles[style],
+      clusterClass: style === 3 ? 'custom-clustericon' : undefined
+    });
+  }
 
   setupAutocomplete() {
     const autocomplete = new google.maps.places.Autocomplete(this.input);
@@ -211,7 +352,7 @@ export class StoreLocator extends Component {
         this.map.fitBounds(place.geometry.viewport);
       } else {
         this.map.setCenter(place.geometry.location);
-        this.map.setZoom(11);
+        // this.map.setZoom(11);
       }
       const location = place.geometry.location.toJSON();
       this.setState({searchLocation: location});
@@ -264,7 +405,7 @@ export class StoreLocator extends Component {
 
   onStoreClick({location, id}) {
     this.map.setCenter(location);
-    this.map.setZoom(16);
+    // this.map.setZoom(16);
     this.setState({activeStoreId: id});
   }
 
