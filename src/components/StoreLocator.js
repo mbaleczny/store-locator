@@ -19,6 +19,9 @@ const units = {
   IMPERIAL: 1
 };
 
+const CLUSTERING_ZOOM = 9;
+const CLUSTERER_ON_TAP_ZOOM = 12;
+
 const styles = [
   [
     MarkerClusterer.withDefaultStyle({
@@ -143,6 +146,8 @@ export class StoreLocator extends Component {
       stores: [], // stores: this.addStoreIds(props.stores)
       clusters: props.clusters ? this.parseMapPoints(props.clusters) : [],
       zoom: props.zoom,
+      init: true,
+      center: props.center,
     };
     this.markers = [];
     this.markerClusterer = null;
@@ -169,11 +174,11 @@ export class StoreLocator extends Component {
   }
 
   // loadStores = async (searchLocation = this.props.center, zoom = this.props.zoom) => {
-    // if (!this.props.loadStores) return this.state.stores;
-    // let stores = await this.props.loadStores(searchLocation, zoom);
-    // stores = this.addStoreIds(stores);
-    // this.setState({ stores });
-    // this.setState({ stores: [] });
+  // if (!this.props.loadStores) return this.state.stores;
+  // let stores = await this.props.loadStores(searchLocation, zoom);
+  // stores = this.addStoreIds(stores);
+  // this.setState({ stores });
+  // this.setState({ stores: [] });
   //   return [];
   // };
 
@@ -321,45 +326,63 @@ export class StoreLocator extends Component {
   };
 
   load() {
-    google.maps.event.addListener(
+    google.maps.event.addListenerOnce(
       this.map,
       "idle",
-      () => this.onMoveOrZoom(this.map.getCenter(), this.map.getZoom())
+      () => {
+        this.onMoveOrZoom(this.map.getCenter(), this.map.getZoom(), true);
+        google.maps.event.addListener(
+          this.map,
+          "idle",
+          () => {
+            this.onMoveOrZoom(this.map.getCenter(), this.map.getZoom(), false);
+          }
+        );
+      }
     );
   }
 
-  async onMoveOrZoom(center, zoom) {
+  async onMoveOrZoom(center, zoom, init) {
     console.log('zoom', zoom)
     console.log('center', center)
     // let location = await getUserLocation();
 
-    let bounds = this.map.getBounds();
-    
-    if (this.isClustered(zoom)) {
-      if (this.state.clusters === undefined | this.state.clusters == []) {
-        let clusters = await this.fetchClusters();
-        let data = this.parseMapPoints(clusters);
-        console.log('clusters', data);
-        this.setState({ clusters: data });
-        console.log('this.state.clusters', this.state.clusters)
-      }
-    } else {
-      let stores = await this.fetchStoresInBounds(bounds.getNorthEast(), bounds.getSouthWest());
-      console.log('stores', stores);
-      let data = this.parseMapPoints(stores)
-      this.setState({ stores: data });
+    if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
+      console.log('NIE leci dalej')
+      return;
+    }
+    console.log('leci dalej')
+
+    if (this.state.zoom != zoom) {
+      this.setState({ zoom: zoom })
     }
 
-    this.refreshMap(this.isClustered(zoom))
+    if (this.state.center != center) {
+      this.setState({ center: center })
+    }
+
+    if (this.isClustered(zoom)) {
+      this.refreshMap(this.isClustered(zoom), this.state.clusters)
+    } else {
+      this.fetchAndRefreshStoresInBounds();
+    }
+  }
+
+  fetchAndRefreshStoresInBounds = async () => {
+    let bounds = this.map.getBounds();
+    let stores = await this.fetchStoresInBounds(bounds.getNorthEast(), bounds.getSouthWest());
+    let data = this.parseMapPoints(stores)
+    this.setState({ stores: this.parseMapPoints(stores) });
+    this.refreshMap(this.isClustered(this.map.getZoom()), data)
   }
 
   parseMapPoints = (points) => points.map((e) => {
     e["location"] = { lat: parseFloat(e.lat), lng: parseFloat(e.lng) }
     return e;
   });
-  
+
   clustersSpreadSheetUrl = () => `https://docs.google.com/spreadsheets/d/${this.props.spreadSheetId}/gviz/tq?sheet=zoom_out_clusters&tqx=out:csv&headers=1`
-  
+
   storesInBoundsSpreadSheetUrl = (encodedQuery) => `https://docs.google.com/spreadsheets/d/${this.props.spreadSheetId}/gviz/tq?sheet=stores&tq=${encodedQuery}&tqx=out:csv&headers=1`
 
   async fetchClusters() {
@@ -380,14 +403,14 @@ export class StoreLocator extends Component {
     return stores;
   }
 
-  isClustered = (zoom) => zoom < 9;
+  isClustered = (zoom) => zoom < CLUSTERING_ZOOM;
 
-  refreshMap(clustered) {
+  refreshMap(clustered, elements) {
     if (this.markerClusterer) this.markerClusterer.clearMarkers();
 
     console.log('refreshMap', `clustered: ${clustered}`)
 
-    let elements = clustered ? this.state.clusters : this.state.stores;
+    // let elements = clustered ? this.state.clusters : this.state.stores;
     console.log('elements', elements.length)
     var markers = [];
 
@@ -397,15 +420,15 @@ export class StoreLocator extends Component {
     }
 
     console.log('markers', markers)
-    
-    // these somehow controls how and whether markers will be clustered
-    let zoom = 7;
+
+    // this zoom will be set once you tap on markerclusterer
+    let maxZoom = CLUSTERER_ON_TAP_ZOOM;
     let size = 60;
 
     let style = 3;
 
     this.markerClusterer = new MarkerClusterer(this.map, markers, {
-      maxZoom: zoom,
+      maxZoom: maxZoom,
       gridSize: size,
       styles: styles[style],
       clusterClass: style === 3 ? 'custom-clustericon' : undefined,
@@ -423,13 +446,18 @@ export class StoreLocator extends Component {
   }
 
   createClusteredMarker = (element) => {
-    return new google.maps.Marker({
+    var marker = new google.maps.Marker({
       position: element.location,
       title: element.count,
       count: parseInt(element.reccurance),
       map: this.map,
       label: element.reccurance.toString()
     });
+    google.maps.event.addListener(marker, 'click', () => {
+      this.map.panTo(element.location);
+      this.map.setZoom(CLUSTERER_ON_TAP_ZOOM);
+    });
+    return marker;
   }
 
   // based on MarkerClusterer.CALCULATOR
