@@ -125,9 +125,11 @@ export class StoreLocator extends Component {
         if (this.infoWindow) {
           this.infoWindow.close();
         }
-        this.map.panTo(store.location);
-        this.map.setZoom(15);
-        this.calculateDistance(this.state.searchLocation);
+        if (this.map.getZoom() != 15) {
+          this.map.panTo(store.location);
+          this.map.setZoom(15);
+          this.calculateDistance(this.state.searchLocation);
+        }
         infoWindow.open(this.map, marker);
         this.infoWindow = infoWindow;
         this.setState({ activeStoreId: store.id });
