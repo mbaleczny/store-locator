@@ -9,18 +9,10 @@ import WebIcon from './WebIcon';
 import MarkerClusterer from '@google/markerclustererplus';
 import Papa from 'papaparse';
 
-// const travelModes = {
-//   DRIVING: 'car',
-//   WALKING: 'walk'
-// };
-
 const units = {
   METRIC: 0,
   IMPERIAL: 1
 };
-
-const CLUSTERING_ZOOM = 9;
-// const CLUSTERER_ON_TAP_ZOOM = 12;
 
 const style = [
   {
@@ -42,13 +34,18 @@ const style = [
 
 const toMiles = 1.609;
 
+const REGULAR_MARKER_TARGET_ZOOM = 18;
+
 export class StoreLocator extends Component {
   static defaultProps = {
     stores: [],
     clusters: [],
     spreadSheetId: null,
     zoom: 6,
-    limit: 10,
+    clusteringMaxZoom: 9,
+    clusterThresholdZoom: 13,
+    clusterClickZoom: 13,
+    clusterSize: 60,
     center: { lat: 39.6433995, lng: -6.4396778 },
     travelMode: 'DRIVING',
     homeLocationHint: 'Current location',
@@ -57,6 +54,7 @@ export class StoreLocator extends Component {
     unitSystem: 'METRIC',
     farAwayMarkerOpacity: 0.6,
     fullWidthMap: false,
+    loading: false,
   };
 
   constructor(props) {
@@ -68,8 +66,10 @@ export class StoreLocator extends Component {
       clusters: props.clusters ? this.parseMapPoints(props.clusters) : [],
       zoom: props.zoom,
       center: props.center,
+      loading: props.loading,
     };
     this.markers = [];
+    this.loadProps = { center: null, zoom: null };
     this.markerClusterer = null;
   }
 
@@ -111,13 +111,21 @@ export class StoreLocator extends Component {
     if (clustered) {
       google.maps.event.addListener(marker, 'click', () => {
         this.map.panTo(store.location);
-        this.map.setZoom(9);
+        this.map.setZoom(this.props.clusterClickZoom);
       });
     } else {
+
+      var indoorMapLink = ''
+      if (store.indoor_map) {
+        // console.log('store', store);
+        indoorMapLink = `<div>${store.indoor_map}</div>`
+      }
+
       const infoWindow = new google.maps.InfoWindow({
         content: `<div class="${classNames.infoWindow}">
             <h4>${store.name}</h4>
             ${store.address}
+            <span>${indoorMapLink}</span>
           </div>`
       });
 
@@ -125,14 +133,21 @@ export class StoreLocator extends Component {
         if (this.infoWindow) {
           this.infoWindow.close();
         }
-        if (this.map.getZoom() != 15) {
+        let zoom = this.map.getZoom();
+        let center = this.map.getCenter().toJSON();
+
+        if (!this.equalPoints(center, store.location)) {
           this.map.panTo(store.location);
-          this.map.setZoom(15);
-          this.calculateDistance(this.state.searchLocation);
+          this.setState({ activeStoreId: store.id });
         }
-        infoWindow.open(this.map, marker);
-        this.infoWindow = infoWindow;
-        this.setState({ activeStoreId: store.id });
+
+        if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
+          this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
+          this.calculateDistance(this.state.searchLocation);
+        } else {
+          infoWindow.open(this.map, marker);
+          this.infoWindow = infoWindow;
+        }
       });
     }
 
@@ -141,19 +156,62 @@ export class StoreLocator extends Component {
     return marker;
   };
 
+  equalPoints(p1, p2) {
+    let lat1 = parseFloat(p1.lat).toFixed(2);
+    let lat2 = parseFloat(p2.lat).toFixed(2);
+    let lng1 = parseFloat(p1.lng).toFixed(2);
+    let lng2 = parseFloat(p2.lng).toFixed(2);
+    // console.log(`${lat1}, ${lng1} | ${lat2}, ${lng2}`)
+    return lat1 == lat2 && lng1 == lng2;
+  }
 
-  async calculateDistance(searchLocation) {
-    if (!searchLocation) return this.props.stores;
-    const stores = await this.loadStores(searchLocation);
+  async loadData(searchLocation) {
+    // const stores = await this.loadStores(searchLocation);
+    const stores = this.state.stores;
     const data = await promiseMap(stores, async store => {
       const result = await this.getDistance(searchLocation, store.location);
       Object.assign(store, result);
       return store;
     });
-    let result = data.sort((a, b) => a.distance - b.distance);
-    // console.log('sorted', result)
-    this.setState({ stores: result });
+    return data.sort((a, b) => a.distance - b.distance);
+  }
+
+  // shouldLoadData(location) {
+  //   return this.loadProps.center == null || this.loadProps.zoom == null || this.getLastLoadDistance(location) > 10;
+  // }
+
+  // /**
+  //  * Calculates distance diff between location and last location loaded data 
+  //  * 
+  //  * @param {{lat, lng}} location 
+  //  */
+  // getLastLoadDistance(location) {
+  //   const origin = new google.maps.LatLng(this.state.center);
+  //   const dest = new google.maps.LatLng(location);
+  //   return this.getDirectDistance(origin, dest);
+  // }
+
+  // saveLoadData() {
+  //   this.loadProps.center = this.map.getCenter().toJSON();
+  //   this.loadProps.zoom = this.map.getZoom();
+  // }
+
+  async calculateDistance(searchLocation) {
+    this.setState({ loading: true })
+    if (!searchLocation) return this.props.stores;
+
+    var result;
+
+    // if (this.shouldLoadData(searchLocation)) {
+    result = await this.loadData(searchLocation);
+    // this.saveLoadData();
+    // } else {
+    // result = this.state.stores;
+    // }
+
     this.refreshMap(false, result);
+
+    this.setState({ stores: result, loading: false });
   }
 
   async getDistance(p1, p2) {
@@ -188,8 +246,9 @@ export class StoreLocator extends Component {
   }
 
   getDirectDistance(origin, destination) {
-    const distance = google.maps.geometry.spherical.computeDistanceBetween(origin, destination) / 1000;
-    // const distance = this.computeDistanceBetween(origin, destination);
+    // const distance = google.maps.geometry.spherical.computeDistanceBetween(origin, destination) / 1000;
+    const distance = this.computeDistanceBetween(origin, destination);
+    // console.log('distance', distance.toString());
     if (units[this.props.unitSystem] === 1) {
       return {
         distance: distance / toMiles,
@@ -203,13 +262,14 @@ export class StoreLocator extends Component {
   }
 
   computeDistanceBetween(origin, dest) {
-    if ((origin.lat == dest.lat) && (origin.lng == dest.lng)) {
+    this.equalPoints(origin.toJSON(), dest.toJSON());
+    if (this.equalPoints(origin.toJSON(), dest.toJSON())) {
       return 0
     }
     else {
-      var radlat1 = Math.PI * origin.lat / 180;
-      var radlat2 = Math.PI * dest.lat / 180;
-      var theta = origin.lng - dest.lng;
+      var radlat1 = Math.PI * origin.lat() / 180;
+      var radlat2 = Math.PI * dest.lat() / 180;
+      var theta = origin.lng() - dest.lng();
       var radtheta = Math.PI * theta / 180;
       var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
       if (dist > 1) {
@@ -276,9 +336,7 @@ export class StoreLocator extends Component {
         google.maps.event.addListener(
           this.map,
           "idle",
-          () => {
-            this.onMoveOrZoom(this.map.getCenter(), this.map.getZoom(), false);
-          }
+          () => this.onMoveOrZoom(this.map.getCenter(), this.map.getZoom(), false)
         );
       }
     );
@@ -304,14 +362,16 @@ export class StoreLocator extends Component {
 
     if (this.isClustered(zoom)) {
       this.refreshMap(this.isClustered(zoom), this.state.clusters)
+      // } else if (this.shouldLoadData(this.state.searchLocation)) {
     } else {
       await this.fetchAndRefreshStoresInBounds(center);
       this.calculateDistance(this.state.searchLocation);
     }
   }
 
-  fetchAndRefreshStoresInBounds = async (center) => {
+  async fetchAndRefreshStoresInBounds(center) {
     let data = await this.loadStores(center);
+    // await this.calculateDistance(center);
     this.refreshMap(this.isClustered(this.map.getZoom()), data)
     return Promise.resolve();
   }
@@ -319,7 +379,7 @@ export class StoreLocator extends Component {
   loadStores = async () => {
     let bounds = this.map.getBounds();
     let stores = await this.fetchStoresInBounds(bounds.getNorthEast(), bounds.getSouthWest());
-    const data = await promiseMap(stores, this.parseMapPoint)
+    const data = await promiseMap(stores, this.parseMapPoint).then(this.addStoreIds)
     this.setState({ stores: data });
     return data;
   }
@@ -344,7 +404,7 @@ export class StoreLocator extends Component {
     return stores;
   }
 
-  isClustered = (zoom) => zoom < CLUSTERING_ZOOM;
+  isClustered = (zoom) => zoom < this.props.clusteringMaxZoom;
 
   refreshMap(clustered, elements) {
     if (this.markerClusterer) this.markerClusterer.clearMarkers();
@@ -360,8 +420,8 @@ export class StoreLocator extends Component {
     // console.log('markers', this.markers)
 
     // this zoom will be set once you tap on markerclusterer
-    let maxZoom = 12;
-    let size = 60;
+    let maxZoom = this.props.clusterThresholdZoom;
+    let size = this.props.clusterSize;
 
     this.markerClusterer = new MarkerClusterer(this.map, this.markers, {
       maxZoom: maxZoom,
@@ -428,7 +488,9 @@ export class StoreLocator extends Component {
       // console.log('test location', location)
       this.setState({ searchLocation: location });
       this.setHomeMarker(location);
+      // if (this.shouldLoadData(location)) {
       this.calculateDistance(location);
+      // }
     });
   }
 
@@ -475,6 +537,13 @@ export class StoreLocator extends Component {
                     </div>
                   )}
                   <address>{store.address}</address>
+                  {store.indoor_map && (
+                    <div className={classNames.storeDistance}>
+                      <a target="_blank" href={`http://${store.indoor_map}`}>
+                        Indoor Map
+                      </a>
+                    </div>
+                  )}
                   <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
                     <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
                       <DirectionIcon />
