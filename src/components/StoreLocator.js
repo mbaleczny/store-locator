@@ -55,6 +55,7 @@ export class StoreLocator extends Component {
     farAwayMarkerOpacity: 0.6,
     fullWidthMap: false,
     loading: false,
+    language: 'en'
   };
 
   constructor(props) {
@@ -69,8 +70,8 @@ export class StoreLocator extends Component {
       loading: props.loading,
     };
     this.markers = [];
-    this.loadProps = { center: null, zoom: null };
     this.markerClusterer = null;
+    this.language = props.language;
   }
 
   componentDidMount() {
@@ -88,7 +89,7 @@ export class StoreLocator extends Component {
   async loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
     return loadScript(
-      `https://maps.googleapis.com/maps/api/js?v=3&key=${this.props.apiKey}&libraries=geometry,places`
+      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&language=${this.props.language}&libraries=geometry,places`
     );
   }
 
