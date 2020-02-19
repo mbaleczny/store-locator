@@ -79,13 +79,6 @@ export class StoreLocator extends Component {
       .then(this.setupMap);
   }
 
-  addStoreIds(stores = []) {
-    return stores.map((store, i) => {
-      store.id = store.id || i;
-      return store;
-    });
-  }
-
   async loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
     return loadScript(
@@ -115,18 +108,15 @@ export class StoreLocator extends Component {
         this.map.setZoom(this.props.clusterClickZoom);
       });
     } else {
-
-      var indoorMapLink = ''
-      if (store.indoor_map) {
-        // console.log('store', store);
-        indoorMapLink = `<div>${store.indoor_map}</div>`
-      }
+      let indoorMapLink = store.indoor_map ?
+        `<a target="_blank" href=${store.indoor_map}>${this.props.indoorMapText}</a>` :
+        ''
 
       const infoWindow = new google.maps.InfoWindow({
         content: `<div class="${classNames.infoWindow}">
-            <h4>${store.name}</h4>
-            ${store.address}
-            <span>${indoorMapLink}</span>
+            <div class="storeLocator-infoWindow-title">${store.name}</div>
+            <div class="storeLocator-infoWindow-address">${store.address}, ${store.city}</div>
+            <div class="storeLocator-infoWindow-indoorMapLink">${indoorMapLink}</div>
           </div>`
       });
 
@@ -139,7 +129,6 @@ export class StoreLocator extends Component {
 
         if (!this.equalPoints(center, store.location)) {
           this.map.panTo(store.location);
-          this.setState({ activeStoreId: store.id });
         }
 
         if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
@@ -149,6 +138,7 @@ export class StoreLocator extends Component {
           infoWindow.open(this.map, marker);
           this.infoWindow = infoWindow;
         }
+        this.setState({ activeStoreId: store.id });
       });
     }
 
@@ -373,6 +363,7 @@ export class StoreLocator extends Component {
   async fetchAndRefreshStoresInBounds(center) {
     let data = await this.loadStores(center);
     // await this.calculateDistance(center);
+    console.log('data', data)
     this.refreshMap(this.isClustered(this.map.getZoom()), data)
     return Promise.resolve();
   }
@@ -380,7 +371,7 @@ export class StoreLocator extends Component {
   loadStores = async () => {
     let bounds = this.map.getBounds();
     let stores = await this.fetchStoresInBounds(bounds.getNorthEast(), bounds.getSouthWest());
-    const data = await promiseMap(stores, this.parseMapPoint).then(this.addStoreIds)
+    const data = await promiseMap(stores, this.parseMapPoint);
     this.setState({ stores: data });
     return data;
   }
@@ -398,7 +389,7 @@ export class StoreLocator extends Component {
     // console.log('fetchStoresInBounds')
     // console.log('NE', northEast)
     // console.log('SW', southWest)
-    let encodedQuery = encodeURIComponent(`select * where M > ${southWest.lat()} and M < ${northEast.lat()} and N > ${southWest.lng()} and N < ${northEast.lng()}`);
+    let encodedQuery = encodeURIComponent(`select * where N > ${southWest.lat()} and N < ${northEast.lat()} and O > ${southWest.lng()} and O < ${northEast.lng()}`);
     let storeResponse = await fetch(this.storesInBoundsSpreadSheetUrl(encodedQuery));
     let storesData = await storeResponse.text();
     let stores = Papa.parse(storesData, { header: true, dynamicTyping: true }).data
@@ -503,8 +494,12 @@ export class StoreLocator extends Component {
   }
 
   onStoreClick({ location, id }) {
-    this.map.setCenter(location);
-    this.map.setZoom(16);
+    if (!this.equalPoints(location, this.map.getCenter())) {
+      this.map.setCenter(location);
+    }
+    if (this.map.getZoom() < REGULAR_MARKER_TARGET_ZOOM) {
+      this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
+    }
     this.setState({ activeStoreId: id });
   }
 
@@ -528,7 +523,7 @@ export class StoreLocator extends Component {
                   onClick={() => this.onStoreClick(store)}
                   className={cx({
                     [classNames.activeStore]: store.id === activeStoreId,
-                    [classNames.hiddenStore]: store.hidden
+                    [classNames.iqosStore]: store.type === "iqos_store"
                   })}
                 >
                   <h4>{store.name}</h4>
@@ -537,10 +532,10 @@ export class StoreLocator extends Component {
                       {store.distanceText}
                     </div>
                   )}
-                  <address>{store.address}</address>
+                  <address>{store.address}, {store.city}</address>
                   {store.indoor_map && (
                     <div className={classNames.storeDistance}>
-                      <a target="_blank" href={`http://${store.indoor_map}`}>
+                      <a target="_blank" href={store.indoor_map}>
                         {this.props.indoorMapText}
                       </a>
                     </div>
