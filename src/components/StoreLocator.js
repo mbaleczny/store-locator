@@ -5,9 +5,9 @@ import { Component } from 'preact';
 import DirectionIcon from './DirectionIcon';
 import SearchIcon from './SearchIcon';
 import classNames from './StoreLocator.css';
-import WebIcon from './WebIcon';
 import MarkerClusterer from '@google/markerclustererplus';
 import Papa from 'papaparse';
+import createHtmlMapMarker from './createHtmlMapMarker';
 
 const units = {
   METRIC: 0,
@@ -281,11 +281,10 @@ export class StoreLocator extends Component {
     const infoWindow = new google.maps.InfoWindow({
       content: this.props.homeLocationHint
     });
-    this.homeMarker = new google.maps.Marker({
-      position: location,
-      title: this.props.homeLocationHint,
+    this.homeMarker = createHtmlMapMarker({
+      latlng: new google.maps.LatLng(location.lat, location.lng),
       map: this.map,
-      icon: this.getMarkerIcon(this.props.homeMarkerIcon)
+      html: '<div class="storeLocator-homeMarker"></div>',
     });
     this.homeMarker.addListener('click', () => {
       if (this.infoWindow) {
@@ -424,19 +423,17 @@ export class StoreLocator extends Component {
     });
   }
 
-  createRegularMarker = (element) => new google.maps.Marker({
-    position: element.location,
-    title: element.name,
+  createRegularMarker = (element) => createHtmlMapMarker({
+    latlng: new google.maps.LatLng(element.location.lat, element.location.lng),
     map: this.map,
-    icon: this.getMarkerIcon(this.props.storeMarkerIcon)
+    html: `<div class="storeLocator-${element.type === "iqos_store" ? 'iqosStoreMarker' : 'regularStoreMarker'}"></div>`,
   });
 
-  createClusteredMarker = (element) => new google.maps.Marker({
-    position: element.location,
-    title: element.count,
+  createClusteredMarker = (element) => createHtmlMapMarker({
+    latlng: new google.maps.LatLng(element.location.lat, element.location.lng),
     count: parseInt(element.reccurance),
     map: this.map,
-    label: element.reccurance.toString()
+    html: `<div class="storeLocator-clusterMarker">${element.reccurance.toString()}</div>`,
   });
 
   // based on MarkerClusterer.CALCULATOR
