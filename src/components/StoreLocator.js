@@ -508,6 +508,10 @@ export class StoreLocator extends Component {
     this.setState({ activeStoreId: id });
   }
 
+  formatDistanceText(distanceText) {
+    return this.props.distanceTextPattern.replace("@", distanceText)
+  }
+
   //noinspection JSCheckFunctionSignatures
   render({ searchHint, travelMode, fullWidthMap }, { activeStoreId, stores }) {
     return (
@@ -534,28 +538,22 @@ export class StoreLocator extends Component {
                   <h4>{store.name}</h4>
                   {store.distanceText && (
                     <div className={classNames.storeDistance}>
-                      {store.distanceText} away{' '}
+                      {this.formatDistanceText(store.distanceText)}
                     </div>
                   )}
                   <address>{store.address}</address>
                   {store.indoor_map && (
                     <div className={classNames.storeDistance}>
                       <a target="_blank" href={`http://${store.indoor_map}`}>
-                        Indoor Map
+                        {this.props.indoorMapText}
                       </a>
                     </div>
                   )}
                   <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
                     <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
                       <DirectionIcon />
-                      directions
-                    </a>{' '}
-                    {store.website && (
-                      <a target="_blank" href={store.website}>
-                        <WebIcon />
-                        website
-                      </a>
-                    )}
+                      {this.props.directionsText}
+                    </a>
                   </div>
                 </li>
               );
