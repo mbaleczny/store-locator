@@ -38,19 +38,16 @@ const REGULAR_MARKER_TARGET_ZOOM = 18;
 
 export class StoreLocator extends Component {
   static defaultProps = {
-    stores: [],
     clusters: [],
     spreadSheetId: null,
-    zoom: 6,
+    zoom: 4,
     clusteringMaxZoom: 9,
     clusterThresholdZoom: 13,
     clusterClickZoom: 13,
     clusterSize: 60,
-    center: { lat: 39.6433995, lng: -6.4396778 },
+    center: undefined,
     travelMode: 'DRIVING',
     homeLocationHint: 'Current location',
-    homeMarkerIcon: 'http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png',
-    storeMarkerIcon: 'http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png',
     unitSystem: 'METRIC',
     farAwayMarkerOpacity: 0.6,
     fullWidthMap: false,
@@ -82,7 +79,7 @@ export class StoreLocator extends Component {
   async loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
     return loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&language=${this.props.language}&libraries=geometry,places`
+      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&language=${this.props.language}&libraries=places`
     );
   }
 
@@ -133,7 +130,7 @@ export class StoreLocator extends Component {
 
         if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
           this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
-          this.calculateDistance(this.state.searchLocation);
+          // this.calculateDistance(this.state.searchLocation);
         } else {
           infoWindow.open(this.map, marker);
           this.infoWindow = infoWindow;
@@ -156,7 +153,7 @@ export class StoreLocator extends Component {
     return lat1 == lat2 && lng1 == lng2;
   }
 
-  async loadData(searchLocation) {
+  async loadDistanceData(searchLocation) {
     // const stores = await this.loadStores(searchLocation);
     const stores = this.state.stores;
     const data = await promiseMap(stores, async store => {
@@ -188,17 +185,19 @@ export class StoreLocator extends Component {
   // }
 
   async calculateDistance(searchLocation) {
+    if (!searchLocation) return;
+    
     this.setState({ loading: true })
-    if (!searchLocation) return this.props.stores;
-
-    var result;
-
+    
+    // var result;
     // if (this.shouldLoadData(searchLocation)) {
-    result = await this.loadData(searchLocation);
+    // result = await this.loadDistanceData(searchLocation);
     // this.saveLoadData();
     // } else {
     // result = this.state.stores;
     // }
+
+    let result = await this.loadDistanceData(searchLocation);
 
     this.refreshMap(false, result);
 
@@ -312,8 +311,15 @@ export class StoreLocator extends Component {
     this.setupAutocomplete();
 
     const location = await getUserLocation();
-    this.setState({ searchLocation: location });
-    this.setHomeMarker(center);
+    console.log('location', location);
+
+    if (location !== undefined) {
+      this.setState({ searchLocation: location });
+      this.setHomeMarker(location);
+    } else {
+      this.setHomeMarker(center);
+    }
+
     this.load();
   };
 
@@ -342,13 +348,19 @@ export class StoreLocator extends Component {
     }
     // console.log('LOAD')
 
+    var nextState = null;
+    
     if (this.state.zoom != zoom) {
-      this.setState({ zoom: zoom })
+      nextState = { zoom: zoom };
+      
+      if (this.state.center != center) {
+        nextState = { ...nextState, ...{ center: center } } 
+      }
+    } else if (this.state.center != center) {
+      nextState = { center: center };
     }
 
-    if (this.state.center != center) {
-      this.setState({ center: center })
-    }
+    if (nextState != null) this.setState({ center: center })
 
     if (this.isClustered(zoom)) {
       this.refreshMap(this.isClustered(zoom), this.state.clusters)
@@ -363,7 +375,7 @@ export class StoreLocator extends Component {
     let data = await this.loadStores(center);
     // await this.calculateDistance(center);
     console.log('data', data)
-    this.refreshMap(this.isClustered(this.map.getZoom()), data)
+    this.refreshMap(false, data)
     return Promise.resolve();
   }
 
@@ -478,7 +490,7 @@ export class StoreLocator extends Component {
       this.setState({ searchLocation: location });
       this.setHomeMarker(location);
       // if (this.shouldLoadData(location)) {
-      this.calculateDistance(location);
+      // this.calculateDistance(location);
       // }
     });
   }

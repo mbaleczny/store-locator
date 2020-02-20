@@ -25,7 +25,7 @@ export function getUserLocation() {
         resolve({lat: p.coords.latitude, lng: p.coords.longitude});
       },
       () => {
-        reject('user denied request for position');
+        resolve({lat: 0, lng: 0});
       }
     );
   });
