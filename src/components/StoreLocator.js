@@ -398,38 +398,10 @@ export class StoreLocator extends Component {
     return data.sort((a, b) => a.distance - b.distance);
   }
 
-  // shouldLoadData(location) {
-  //   return this.loadProps.center == null || this.loadProps.zoom == null || this.getLastLoadDistance(location) > 10;
-  // }
-
-  // /**
-  //  * Calculates distance diff between location and last location loaded data 
-  //  * 
-  //  * @param {{lat, lng}} location 
-  //  */
-  // getLastLoadDistance(location) {
-  //   const origin = new google.maps.LatLng(this.state.center);
-  //   const dest = new google.maps.LatLng(location);
-  //   return this.getDirectDistance(origin, dest);
-  // }
-
-  // saveLoadData() {
-  //   this.loadProps.center = this.map.getCenter().toJSON();
-  //   this.loadProps.zoom = this.map.getZoom();
-  // }
-
   async calculateDistance(searchLocation) {
     if (!searchLocation) return;
 
     this.setState({ loading: true })
-
-    // var result;
-    // if (this.shouldLoadData(searchLocation)) {
-    // result = await this.loadDistanceData(searchLocation);
-    // this.saveLoadData();
-    // } else {
-    // result = this.state.stores;
-    // }
 
     let result = await this.loadDistanceData(searchLocation);
 
@@ -444,35 +416,10 @@ export class StoreLocator extends Component {
     const directDistance = this.getDirectDistance(origin, destination);
 
     return Promise.resolve(directDistance)
-    // return new Promise(resolve => {
-    //   this.distanceService.getDistanceMatrix(
-    //     {
-    //       origins: [origin],
-    //       destinations: [destination],
-    //       travelMode: this.props.travelMode,
-    //       unitSystem: units[this.props.unitSystem],
-    //       durationInTraffic: true,
-    //       avoidHighways: false,
-    //       avoidTolls: false
-    //     },
-    //     (response, status) => {
-    //       if (status !== 'OK') return resolve(directDistance);
-    //       const route = response.rows[0].elements[0];
-    //       if (route.status !== 'OK') return resolve(directDistance);
-    //       resolve({
-    //         distance: route.distance.value,
-    //         distanceText: route.distance.text,
-    //         durationText: route.duration.text
-    //       });
-    //     }
-    //   );
-    // });
   }
 
   getDirectDistance(origin, destination) {
-    // const distance = google.maps.geometry.spherical.computeDistanceBetween(origin, destination) / 1000;
     const distance = this.computeDistanceBetween(origin, destination);
-    // console.log('distance', distance.toString());
     if (units[this.props.unitSystem] === 1) {
       return {
         distance: distance / toMiles,
@@ -541,12 +488,9 @@ export class StoreLocator extends Component {
       styles: MAP_STYLES
     });
 
-    // this.distanceService = new google.maps.DistanceMatrixService();
-
     this.setupAutocomplete();
 
     const location = await getUserLocation();
-    // console.log('location', location);
 
     if (location !== undefined) {
       this.setState({ searchLocation: location });
@@ -576,14 +520,9 @@ export class StoreLocator extends Component {
   }
 
   async onMoveOrZoom(center, zoom, init) {
-    // console.log('zoom', zoom)
-    // console.log('center', center)
-
     if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
-      // console.log('NO LOAD')
       return;
     }
-    // console.log('LOAD')
 
     var nextState = null;
 
@@ -601,7 +540,6 @@ export class StoreLocator extends Component {
 
     if (this.isClustered(zoom)) {
       this.refreshMap(this.isClustered(zoom), this.state.clusters)
-      // } else if (this.shouldLoadData(this.state.searchLocation)) {
     } else {
       await this.fetchAndRefreshStoresInBounds(center);
       this.calculateDistance(this.state.searchLocation);
@@ -610,8 +548,6 @@ export class StoreLocator extends Component {
 
   async fetchAndRefreshStoresInBounds(center) {
     let data = await this.loadStores(center);
-    // await this.calculateDistance(center);
-    // console.log('data', data)
     this.refreshMap(false, data)
     return Promise.resolve();
   }
@@ -634,9 +570,6 @@ export class StoreLocator extends Component {
   storesInBoundsSpreadSheetUrl = (encodedQuery) => `https://docs.google.com/spreadsheets/d/${this.props.spreadSheetId}/gviz/tq?sheet=stores&tq=${encodedQuery}&tqx=out:csv&headers=1`
 
   async fetchStoresInBounds(northEast, southWest) {
-    // console.log('fetchStoresInBounds')
-    // console.log('NE', northEast)
-    // console.log('SW', southWest)
     let encodedQuery = encodeURIComponent(`select * where N > ${southWest.lat()} and N < ${northEast.lat()} and O > ${southWest.lng()} and O < ${northEast.lng()}`);
     let storeResponse = await fetch(this.storesInBoundsSpreadSheetUrl(encodedQuery));
     let storesData = await storeResponse.text();
@@ -649,17 +582,9 @@ export class StoreLocator extends Component {
   refreshMap(clustered, elements) {
     if (this.markerClusterer) this.markerClusterer.clearMarkers();
     this.clearMarkers();
-
-    // console.log('refreshMap', `clustered: ${clustered}`)
-    // console.log('elements', elements.length)
-
     for (var i = 0; i < elements.length; i++) {
       this.addStoreMarker(clustered, elements[i]);
     }
-
-    // console.log('markers', this.markers)
-
-    // this zoom will be set once you tap on markerclusterer
     let maxZoom = this.props.clusterThresholdZoom;
     let size = this.props.clusterSize;
 
@@ -691,7 +616,6 @@ export class StoreLocator extends Component {
     var count = markers.length;
     var dv = count;
 
-    // no idea what it does
     while (dv !== 0) {
       dv = parseInt(dv / 10, 10);
       index++;
@@ -723,12 +647,8 @@ export class StoreLocator extends Component {
       }
 
       const location = place.geometry.location.toJSON();
-      // console.log('test location', location)
       this.setState({ searchLocation: location });
       this.setHomeMarker(location);
-      // if (this.shouldLoadData(location)) {
-      // this.calculateDistance(location);
-      // }
     });
   }
 
