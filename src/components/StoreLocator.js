@@ -341,10 +341,10 @@ export class StoreLocator extends Component {
         ''
 
       const infoWindow = new google.maps.InfoWindow({
-        content: `<div class="${classNames.infoWindow}">
+        content: `<div class="storeLocator-infoWindow">
             <div class="storeLocator-infoWindow-title">${store.name}</div>
             <div class="storeLocator-infoWindow-address">${store.address}, ${store.city}</div>
-            <div class="storeLocator-infoWindow-indoorMapLink">${indoorMapLink}</div>
+            ${store.indoor_map ? `<div class="storeLocator-infoWindow-indoorMapLink">${indoorMapLink}</div>` : ''}
           </div>`
       });
 
@@ -361,7 +361,9 @@ export class StoreLocator extends Component {
 
         if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
           this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
-          this.map.panTo(store.location);
+          if (!this.equalPoints(center, store.location)) {
+            this.map.panTo(store.location);
+          }
           // this.calculateDistance(this.state.searchLocation);
         } else {
           infoWindow.open(this.map, marker);
@@ -760,7 +762,7 @@ export class StoreLocator extends Component {
   }
 
   //noinspection JSCheckFunctionSignatures
-  render({ searchHint, travelMode, fullWidthMap }, { activeStoreId, stores }) {
+  render({ searchHint, travelMode, fullWidthMap, onInfoIconClick }, { activeStoreId, stores }) {
     return (
       <div className={cx(classNames.container, { [classNames.fullWidthMap]: fullWidthMap })}>
         <div className={classNames.searchBox}>
@@ -782,7 +784,7 @@ export class StoreLocator extends Component {
                     [classNames.iqosStore]: store.type === "iqos_store"
                   })}
                 >
-                  <div className="storeLocator-infoIcon"></div>
+                  <div className="storeLocator-infoIcon" onClick={e => onInfoIconClick(e, store)}></div>
                   <h4>{store.name}</h4>
                   <address>{store.address}, {store.city}</address>
                   <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
@@ -796,7 +798,7 @@ export class StoreLocator extends Component {
                     </a>
                   </div>
                   {store.indoor_map && (
-                    <div className={classNames.storeDistance}>
+                    <div className="storeLocator-indoorMap">
                       <a target="_blank" href={store.indoor_map}>
                         <span>{this.props.indoorMapText}</span>
                       </a>
