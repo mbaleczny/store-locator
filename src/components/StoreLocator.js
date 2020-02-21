@@ -2,7 +2,6 @@ import promiseMap from 'p-map';
 import cx from 'classnames';
 import { getUserLocation, loadScript } from 'lib/utils';
 import { Component } from 'preact';
-import DirectionIcon from './DirectionIcon';
 import SearchIcon from './SearchIcon';
 import classNames from './StoreLocator.css';
 import MarkerClusterer from '@google/markerclustererplus';
@@ -32,6 +31,237 @@ const style = [
   }
 ];
 
+const MAP_STYLES = [
+  {
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#f5f5f5"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#616161"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#f5f5f5"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.country",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#423d36"
+      },
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.land_parcel",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.land_parcel",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#bdbdbd"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.locality",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.neighborhood",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.province",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#eeeeee"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.business",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#e5e5e5"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9e9e9e"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#ffffff"
+      }
+    ]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#dadada"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#616161"
+      }
+    ]
+  },
+  {
+    "featureType": "road.local",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9e9e9e"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.line",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#e5e5e5"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#eeeeee"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#c9c9c9"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#9fdcff"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9e9e9e"
+      }
+    ]
+  }
+];
+
 const toMiles = 1.609;
 
 const REGULAR_MARKER_TARGET_ZOOM = 18;
@@ -49,6 +279,7 @@ export class StoreLocator extends Component {
     travelMode: 'DRIVING',
     homeLocationHint: 'Current location',
     unitSystem: 'METRIC',
+    weekDays: ["Monday", "Tuesday", "Wednesday", "Thurday", "Friday", "Saturday", "Sunday"],
     farAwayMarkerOpacity: 0.6,
     fullWidthMap: false,
     loading: false,
@@ -130,6 +361,7 @@ export class StoreLocator extends Component {
 
         if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
           this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
+          this.map.panTo(store.location);
           // this.calculateDistance(this.state.searchLocation);
         } else {
           infoWindow.open(this.map, marker);
@@ -186,9 +418,9 @@ export class StoreLocator extends Component {
 
   async calculateDistance(searchLocation) {
     if (!searchLocation) return;
-    
+
     this.setState({ loading: true })
-    
+
     // var result;
     // if (this.shouldLoadData(searchLocation)) {
     // result = await this.loadDistanceData(searchLocation);
@@ -303,7 +535,8 @@ export class StoreLocator extends Component {
       zoom,
       mapTypeControl: false,
       streetViewControl: false,
-      fullscreenControl: false
+      fullscreenControl: false,
+      styles: MAP_STYLES
     });
 
     // this.distanceService = new google.maps.DistanceMatrixService();
@@ -316,6 +549,8 @@ export class StoreLocator extends Component {
     if (location !== undefined) {
       this.setState({ searchLocation: location });
       this.setHomeMarker(location);
+      this.map.setZoom(15)
+      this.map.setCenter(location)
     } else {
       this.setHomeMarker(center);
     }
@@ -349,12 +584,12 @@ export class StoreLocator extends Component {
     // console.log('LOAD')
 
     var nextState = null;
-    
+
     if (this.state.zoom != zoom) {
       nextState = { zoom: zoom };
-      
+
       if (this.state.center != center) {
-        nextState = { ...nextState, ...{ center: center } } 
+        nextState = { ...nextState, ...{ center: center } }
       }
     } else if (this.state.center != center) {
       nextState = { center: center };
@@ -512,6 +747,18 @@ export class StoreLocator extends Component {
     this.setState({ activeStoreId: id });
   }
 
+  getOpenings(store) {
+    return [
+      {day: this.props.weekDays[0], time: store.ot_monday},
+      {day: this.props.weekDays[1], time: store.ot_tuesday},
+      {day: this.props.weekDays[2], time: store.ot_wednesday},
+      {day: this.props.weekDays[3], time: store.ot_thursday},
+      {day: this.props.weekDays[4], time: store.ot_friday},
+      {day: this.props.weekDays[5], time: store.ot_saturday},
+      {day: this.props.weekDays[6], time: store.ot_sunda},
+    ];
+  }
+
   //noinspection JSCheckFunctionSignatures
   render({ searchHint, travelMode, fullWidthMap }, { activeStoreId, stores }) {
     return (
@@ -535,25 +782,36 @@ export class StoreLocator extends Component {
                     [classNames.iqosStore]: store.type === "iqos_store"
                   })}
                 >
+                  <div className="storeLocator-infoIcon"></div>
                   <h4>{store.name}</h4>
-                  {store.distanceText && (
-                    <div className={classNames.storeDistance}>
-                      {store.distanceText}
-                    </div>
-                  )}
                   <address>{store.address}, {store.city}</address>
+                  <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
+                    <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
+                      <span>{this.props.directionsText}</span>
+                      {store.distanceText && (
+                        <div className={classNames.storeDistance}>
+                          {store.distanceText}
+                        </div>
+                      )}
+                    </a>
+                  </div>
                   {store.indoor_map && (
                     <div className={classNames.storeDistance}>
                       <a target="_blank" href={store.indoor_map}>
-                        {this.props.indoorMapText}
+                        <span>{this.props.indoorMapText}</span>
                       </a>
                     </div>
                   )}
-                  <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
-                    <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
-                      <DirectionIcon />
-                      {this.props.directionsText}
-                    </a>
+                  <div className="storeLocator-openingTimes">
+                    <ul>
+                      {this.getOpenings(store).map((d) => (
+                        <li>
+                          <span>{d.day}:</span>
+                          {' '}
+                          <span>{d.time || "-"}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </li>
               );
