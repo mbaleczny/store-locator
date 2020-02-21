@@ -489,19 +489,34 @@ export class StoreLocator extends Component {
 
     this.setupAutocomplete();
 
-    const location = await getUserLocation();
-
-    if (location !== undefined) {
-      this.setState({ searchLocation: location });
-      this.setHomeMarker(location);
-      this.map.setZoom(15)
-      this.map.setCenter(location)
-    } else {
-      // this.setHomeMarker(center);
-    }
+    this.loadIpLocation();
+    this.loadGeolocation();
 
     this.load();
   };
+
+  async loadGeolocation() {
+    const location = await getUserLocation();
+
+    if (location !== undefined) {
+      this.initLoadLocation(location)
+    }
+  }
+
+  async loadIpLocation() {
+    let ipResponse = await fetch('http://ip-api.com/json')
+    let json = await ipResponse.json()
+    if (json.status == "success") {
+      this.initLoadLocation({lat: json.lat, lng: json.lon})
+    }
+  }
+
+  initLoadLocation(location) {
+    this.setState({ searchLocation: location });
+    this.setHomeMarker(location);
+    this.map.setZoom(15)
+    this.map.setCenter(location)
+  }
 
   load() {
     google.maps.event.addListenerOnce(
@@ -520,8 +535,6 @@ export class StoreLocator extends Component {
 
   async onMoveOrZoom(center, zoom, init) {
     if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
-      console.log("STOP")
-
       if (!this.loadedClusters) {
         this.refreshMap(true, this.state.clusters)
         this.loadedClusters = true;
@@ -529,7 +542,6 @@ export class StoreLocator extends Component {
       }
       return;
     }
-    console.log("LOAD")
 
     var nextState = null;
 
