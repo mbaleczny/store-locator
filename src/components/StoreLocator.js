@@ -546,7 +546,7 @@ export class StoreLocator extends Component {
     this.setupAutocomplete();
 
     const location = await getUserLocation();
-    console.log('location', location);
+    // console.log('location', location);
 
     if (location !== undefined) {
       this.setState({ searchLocation: location });
@@ -611,7 +611,7 @@ export class StoreLocator extends Component {
   async fetchAndRefreshStoresInBounds(center) {
     let data = await this.loadStores(center);
     // await this.calculateDistance(center);
-    console.log('data', data)
+    // console.log('data', data)
     this.refreshMap(false, data)
     return Promise.resolve();
   }
