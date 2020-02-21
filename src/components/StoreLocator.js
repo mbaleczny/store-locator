@@ -270,7 +270,7 @@ export class StoreLocator extends Component {
   static defaultProps = {
     clusters: [],
     spreadSheetId: null,
-    zoom: 4,
+    zoom: 2,
     clusteringMaxZoom: 9,
     clusterThresholdZoom: 13,
     clusterClickZoom: 13,
@@ -477,8 +477,6 @@ export class StoreLocator extends Component {
 
   setupMap = async () => {
     const { center, zoom } = this.props;
-    // console.log('setupMap - center', center)
-    // console.log('setupMap - zoom', zoom)
     this.map = new window.google.maps.Map(this.mapFrame, {
       center,
       zoom,
@@ -498,7 +496,7 @@ export class StoreLocator extends Component {
       this.map.setZoom(15)
       this.map.setCenter(location)
     } else {
-      this.setHomeMarker(center);
+      // this.setHomeMarker(center);
     }
 
     this.load();

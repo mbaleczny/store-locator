@@ -25,7 +25,7 @@ export function getUserLocation() {
         resolve({lat: p.coords.latitude, lng: p.coords.longitude});
       },
       () => {
-        resolve({lat: 0, lng: 0});
+        resolve(undefined);
       }
     );
   });
