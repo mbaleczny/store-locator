@@ -525,6 +525,7 @@ export class StoreLocator extends Component {
       if (!this.loadedClusters) {
         this.refreshMap(true, this.state.clusters)
         this.loadedClusters = true;
+        this.setState({stores: [undefined]})
       }
       return;
     }
@@ -547,6 +548,7 @@ export class StoreLocator extends Component {
     if (this.isClustered(zoom)) {
       this.refreshMap(true, this.state.clusters)
       this.loadedClusters = true;
+      this.setState({stores: []})
     } else {
       this.loadedClusters = false;
       await this.fetchAndRefreshStoresInBounds(center);
