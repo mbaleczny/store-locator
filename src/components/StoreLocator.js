@@ -300,6 +300,7 @@ export class StoreLocator extends Component {
     this.markers = [];
     this.markerClusterer = null;
     this.language = props.language;
+    this.loadedClusters = false;
   }
 
   componentDidMount() {
@@ -519,8 +520,15 @@ export class StoreLocator extends Component {
 
   async onMoveOrZoom(center, zoom, init) {
     if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
+      console.log("STOP")
+
+      if (!this.loadedClusters) {
+        this.refreshMap(true, this.state.clusters)
+        this.loadedClusters = true;
+      }
       return;
     }
+    console.log("LOAD")
 
     var nextState = null;
 
@@ -537,8 +545,10 @@ export class StoreLocator extends Component {
     if (nextState != null) this.setState({ center: center })
 
     if (this.isClustered(zoom)) {
-      this.refreshMap(this.isClustered(zoom), this.state.clusters)
+      this.refreshMap(true, this.state.clusters)
+      this.loadedClusters = true;
     } else {
+      this.loadedClusters = false;
       await this.fetchAndRefreshStoresInBounds(center);
       this.calculateDistance(this.state.searchLocation);
     }
