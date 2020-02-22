@@ -17,7 +17,7 @@ export function loadScript(src) {
   });
 }
 
-export function getUserLocation() {
+export function getUserLocation(options = {}) {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject('no geolocation support');
     navigator.geolocation.getCurrentPosition(
@@ -26,7 +26,8 @@ export function getUserLocation() {
       },
       () => {
         resolve(undefined);
-      }
+      },
+      options
     );
   });
 }

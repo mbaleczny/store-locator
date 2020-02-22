@@ -266,6 +266,9 @@ const toMiles = 1.609;
 
 const REGULAR_MARKER_TARGET_ZOOM = 18;
 
+const GEOLOCATION_ZOOM = 15;
+const IP_LOCATION_ZOOM = 13;
+
 export class StoreLocator extends Component {
   static defaultProps = {
     clusters: [],
@@ -301,6 +304,8 @@ export class StoreLocator extends Component {
     this.markerClusterer = null;
     this.language = props.language;
     this.loadedClusters = false;
+    this.initGeoLocation = null;
+    this.initIpLocation = null;
   }
 
   componentDidMount() {
@@ -488,18 +493,19 @@ export class StoreLocator extends Component {
     });
 
     this.setupAutocomplete();
-
-    this.loadIpLocation();
-    this.loadGeolocation();
-
-    this.load();
+    this.loadLocation();
+    this.loadMap();
   };
 
-  async loadGeolocation() {
-    const location = await getUserLocation();
+  async loadLocation() {
+    const location = await getUserLocation({maximumAge: 300000, timeout: 5000});
 
     if (location !== undefined) {
-      this.initLoadLocation(location)
+      console.log(location);
+      this.setLocationOnMap(location, GEOLOCATION_ZOOM)
+    } else {
+      console.log('loadGeoLocation');
+      this.loadIpLocation();
     }
   }
 
@@ -507,18 +513,18 @@ export class StoreLocator extends Component {
     let ipResponse = await fetch('http://ip-api.com/json')
     let json = await ipResponse.json()
     if (json.status == "success") {
-      this.initLoadLocation({lat: json.lat, lng: json.lon})
+      this.setLocationOnMap({ lat: json.lat, lng: json.lon }, IP_LOCATION_ZOOM)
     }
   }
 
-  initLoadLocation(location) {
+  setLocationOnMap(location, zoom = GEOLOCATION_ZOOM) {
     this.setState({ searchLocation: location });
     this.setHomeMarker(location);
-    this.map.setZoom(15)
+    this.map.setZoom(zoom)
     this.map.setCenter(location)
   }
 
-  load() {
+  loadMap() {
     google.maps.event.addListenerOnce(
       this.map,
       "idle",
@@ -538,7 +544,7 @@ export class StoreLocator extends Component {
       if (!this.loadedClusters) {
         this.refreshMap(true, this.state.clusters)
         this.loadedClusters = true;
-        this.setState({stores: [undefined]})
+        this.setState({ stores: [undefined] })
       }
       return;
     }
@@ -560,7 +566,7 @@ export class StoreLocator extends Component {
     if (this.isClustered(zoom)) {
       this.refreshMap(true, this.state.clusters)
       this.loadedClusters = true;
-      this.setState({stores: []})
+      this.setState({ stores: [] })
     } else {
       this.loadedClusters = false;
       await this.fetchAndRefreshStoresInBounds(center);
@@ -693,13 +699,13 @@ export class StoreLocator extends Component {
 
   getOpenings(store) {
     return [
-      {day: this.props.weekDays[0], time: store.ot_monday},
-      {day: this.props.weekDays[1], time: store.ot_tuesday},
-      {day: this.props.weekDays[2], time: store.ot_wednesday},
-      {day: this.props.weekDays[3], time: store.ot_thursday},
-      {day: this.props.weekDays[4], time: store.ot_friday},
-      {day: this.props.weekDays[5], time: store.ot_saturday},
-      {day: this.props.weekDays[6], time: store.ot_sunda},
+      { day: this.props.weekDays[0], time: store.ot_monday },
+      { day: this.props.weekDays[1], time: store.ot_tuesday },
+      { day: this.props.weekDays[2], time: store.ot_wednesday },
+      { day: this.props.weekDays[3], time: store.ot_thursday },
+      { day: this.props.weekDays[4], time: store.ot_friday },
+      { day: this.props.weekDays[5], time: store.ot_saturday },
+      { day: this.props.weekDays[6], time: store.ot_sunda },
     ];
   }
 
