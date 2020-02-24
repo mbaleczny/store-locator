@@ -389,7 +389,6 @@ export class StoreLocator extends Component {
     let lat2 = parseFloat(p2.lat).toFixed(2);
     let lng1 = parseFloat(p1.lng).toFixed(2);
     let lng2 = parseFloat(p2.lng).toFixed(2);
-    // console.log(`${lat1}, ${lng1} | ${lat2}, ${lng2}`)
     return lat1 == lat2 && lng1 == lng2;
   }
 
@@ -501,10 +500,8 @@ export class StoreLocator extends Component {
     const location = await getUserLocation({maximumAge: 300000, timeout: 5000});
 
     if (location !== undefined) {
-      console.log(location);
       this.setLocationOnMap(location, GEOLOCATION_ZOOM)
     } else {
-      console.log('loadGeoLocation');
       this.loadIpLocation();
     }
   }
