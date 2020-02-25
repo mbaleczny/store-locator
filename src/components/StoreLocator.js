@@ -346,10 +346,15 @@ export class StoreLocator extends Component {
         `<a target="_blank" href=${store.indoor_map}>${this.props.indoorMapText}</a>` :
         ''
 
+      const locationStr = `${store.lat},${store.lng}`;
+
       const infoWindow = new google.maps.InfoWindow({
         content: `<div class="storeLocator-infoWindow">
             <div class="storeLocator-infoWindow-title">${store.name}</div>
             <div class="storeLocator-infoWindow-address">${store.address}, ${store.city}</div>
+            <div class="storeLocator-infoWindow-directions">
+              <a target="_blank" href="https://www.google.com/maps?daddr=@${locationStr}">${this.props.directionsText}</a>
+            </div>
             ${store.indoor_map ? `<div class="storeLocator-infoWindow-indoorMapLink">${indoorMapLink}</div>` : ''}
           </div>`
       });
@@ -500,8 +505,10 @@ export class StoreLocator extends Component {
     const location = await getUserLocation({maximumAge: 300000, timeout: 5000});
 
     if (location !== undefined) {
+      console.log('geolocation')
       this.setLocationOnMap(location, GEOLOCATION_ZOOM)
     } else {
+      console.log('iplocation')
       this.loadIpLocation();
     }
   }
