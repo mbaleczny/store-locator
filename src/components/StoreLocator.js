@@ -505,10 +505,8 @@ export class StoreLocator extends Component {
     const location = await getUserLocation({maximumAge: 300000, timeout: 5000});
 
     if (location !== undefined) {
-      console.log('geolocation')
       this.setLocationOnMap(location, GEOLOCATION_ZOOM)
     } else {
-      console.log('iplocation')
       this.loadIpLocation();
     }
   }
@@ -719,7 +717,7 @@ export class StoreLocator extends Component {
       <div className={cx(classNames.container, { [classNames.fullWidthMap]: fullWidthMap })}>
         <div className={classNames.searchBox}>
           <div className={classNames.searchInput}>
-            <input type="text" ref={input => (this.input = input)} />
+            <input type="text" ref={input => (this.input = input)} placeholder={this.props.locationText} />
             <SearchIcon className={classNames.searchIcon} />
           </div>
           {searchHint && <div className={classNames.searchHint}>{searchHint}</div>}
