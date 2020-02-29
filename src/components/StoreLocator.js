@@ -512,10 +512,14 @@ export class StoreLocator extends Component {
   }
 
   async loadIpLocation() {
-    let ipResponse = await fetch('http://ip-api.com/json')
-    let json = await ipResponse.json()
-    if (json.status == "success") {
-      this.setLocationOnMap({ lat: json.lat, lng: json.lon }, IP_LOCATION_ZOOM)
+    try {
+      let ipResponse = await fetch('http://ip-api.com/json')
+      let json = await ipResponse.json()
+      if (json.status == "success") {
+        this.setLocationOnMap({ lat: json.lat, lng: json.lon }, IP_LOCATION_ZOOM)
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
