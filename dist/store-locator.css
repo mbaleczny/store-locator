@@ -192,6 +192,10 @@
     padding: 0 0 0 0;
   }
 
+  .storeLocator-loadingStores {
+    padding: 0 0 0 0;
+  }
+
   .storeLocator-container {
     padding-bottom: 270px;
   }

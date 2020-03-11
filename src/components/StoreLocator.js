@@ -338,7 +338,7 @@ export class StoreLocator extends Component {
 
     if (clustered) {
       google.maps.event.addListener(marker, 'click', () => {
-        this.map.panTo(store.location);
+        this.map.setCenter(store.location);
         this.map.setZoom(this.props.clusterClickZoom);
       });
     } else {
@@ -367,15 +367,12 @@ export class StoreLocator extends Component {
         let center = this.map.getCenter().toJSON();
 
         if (!this.equalPoints(center, store.location)) {
-          this.map.panTo(store.location);
+          this.map.setCenter(store.location);
         }
 
         if (zoom < REGULAR_MARKER_TARGET_ZOOM) {
+          this.map.setCenter(store.location);
           this.map.setZoom(REGULAR_MARKER_TARGET_ZOOM);
-          if (!this.equalPoints(center, store.location)) {
-            this.map.panTo(store.location);
-          }
-          // this.calculateDistance(this.state.searchLocation);
         } else {
           infoWindow.open(this.map, marker);
           this.infoWindow = infoWindow;
@@ -626,8 +623,16 @@ export class StoreLocator extends Component {
       maxZoom: maxZoom,
       gridSize: size,
       styles: style,
+      averageCenter: true,
+      enableRetinaIcons: true,
+      zoomOnClick: false,
       clusterClass: 'custom-clustericon',
       calculator: clustered ? this.zoomedOutMarkerClustererCalculator : MarkerClusterer.CALCULATOR
+    });
+
+    google.maps.event.addListener(this.markerClusterer, 'click', (c) => {
+      this.map.panTo(c.getCenter());
+      this.map.setZoom(this.map.getZoom() + 2);
     });
   }
 
@@ -677,7 +682,7 @@ export class StoreLocator extends Component {
         this.map.fitBounds(place.geometry.viewport);
       } else {
         this.map.setCenter(place.geometry.location);
-        this.map.setZoom(11);
+        this.map.setZoom(IP_LOCATION_ZOOM);
       }
 
       const location = place.geometry.location.toJSON();
@@ -715,7 +720,7 @@ export class StoreLocator extends Component {
     ];
   }
 
-  renderStoreListItem(store, activeStoreId) {
+  renderStoreListItem(store, activeStoreId, onInfoIconClick) {
     if (store === undefined) return
     const locationStr = `${store.lat},${store.lng}`;
     return (
@@ -770,6 +775,9 @@ export class StoreLocator extends Component {
   render({ searchHint, travelMode, fullWidthMap, onInfoIconClick }, { activeStoreId, stores }) {
     return (
       <div className={cx(classNames.container, { [classNames.fullWidthMap]: fullWidthMap })}>
+        <div className={classNames.loadingStores}>
+          <p>{this.props.loadingStoresText}</p>
+        </div>
         <div className={classNames.searchBox}>
           <div className={classNames.searchInput}>
             <input type="text" ref={input => (this.input = input)} placeholder={this.props.locationText} />
@@ -778,7 +786,7 @@ export class StoreLocator extends Component {
           {searchHint && <div className={classNames.searchHint}>{searchHint}</div>}
           <ul className={classNames.storesList}>
             {stores !== undefined && stores.length > 0 ?
-              stores.map(store => this.renderStoreListItem(store, activeStoreId)) :
+              stores.map(store => this.renderStoreListItem(store, activeStoreId, onInfoIconClick)) :
               this.renderEmptyStoreList()}
           </ul>
         </div>
