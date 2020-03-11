@@ -763,7 +763,7 @@ export class StoreLocator extends Component {
   }
 
   renderEmptyStoreList() {
-    return <div className={classNames.emptyStoreList}>{this.props.emptyStoreList}</div>
+    return (<div className={classNames.emptyStoreList}>{this.props.emptyStoreList}</div>)
   }
 
   //noinspection JSCheckFunctionSignatures
