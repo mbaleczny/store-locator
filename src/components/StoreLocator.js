@@ -502,7 +502,7 @@ export class StoreLocator extends Component {
   };
 
   async loadLocation() {
-    const location = await getUserLocation({maximumAge: 300000, timeout: 5000});
+    const location = await getUserLocation({ maximumAge: 300000, timeout: 5000 });
 
     if (location !== undefined) {
       this.setLocationOnMap(location, GEOLOCATION_ZOOM)
@@ -715,6 +715,57 @@ export class StoreLocator extends Component {
     ];
   }
 
+  renderStoreListItem(store, activeStoreId) {
+    if (store === undefined) return
+    const locationStr = `${store.lat},${store.lng}`;
+    return (
+      <li
+        key={store.id}
+        onClick={() => this.onStoreClick(store)}
+        className={cx({
+          [classNames.activeStore]: store.id === activeStoreId,
+          [classNames.iqosStore]: store.type === "iqos_store"
+        })}
+      >
+        <div className="storeLocator-infoIcon" onClick={e => onInfoIconClick(e, store)}></div>
+        <h4>{store.name}</h4>
+        <address>{store.address}, {store.city}</address>
+        <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
+          <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
+            <span>{this.props.directionsText}</span>
+            {store.distanceText && (
+              <div className={classNames.storeDistance}>
+                {store.distanceText}
+              </div>
+            )}
+          </a>
+        </div>
+        {store.indoor_map && (
+          <div className="storeLocator-indoorMap">
+            <a target="_blank" href={store.indoor_map}>
+              <span>{this.props.indoorMapText}</span>
+            </a>
+          </div>
+        )}
+        <div className="storeLocator-openingTimes">
+          <ul>
+            {this.getOpenings(store).map((d) => (
+              <li>
+                <span>{d.day}:</span>
+                {' '}
+                <span>{d.time || "-"}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </li>
+    );
+  }
+
+  renderEmptyStoreList() {
+    return <div className={classNames.emptyStoreList}>{this.props.emptyStoreList}</div>
+  }
+
   //noinspection JSCheckFunctionSignatures
   render({ searchHint, travelMode, fullWidthMap, onInfoIconClick }, { activeStoreId, stores }) {
     return (
@@ -726,52 +777,9 @@ export class StoreLocator extends Component {
           </div>
           {searchHint && <div className={classNames.searchHint}>{searchHint}</div>}
           <ul className={classNames.storesList}>
-            {stores.map(store => {
-              if (store === undefined) return
-              const locationStr = `${store.lat},${store.lng}`;
-              return (
-                <li
-                  key={store.id}
-                  onClick={() => this.onStoreClick(store)}
-                  className={cx({
-                    [classNames.activeStore]: store.id === activeStoreId,
-                    [classNames.iqosStore]: store.type === "iqos_store"
-                  })}
-                >
-                  <div className="storeLocator-infoIcon" onClick={e => onInfoIconClick(e, store)}></div>
-                  <h4>{store.name}</h4>
-                  <address>{store.address}, {store.city}</address>
-                  <div className={classNames.storeActions} onClick={e => e.stopPropagation()}>
-                    <a target="_blank" href={`https://www.google.com/maps?daddr=@${locationStr}`}>
-                      <span>{this.props.directionsText}</span>
-                      {store.distanceText && (
-                        <div className={classNames.storeDistance}>
-                          {store.distanceText}
-                        </div>
-                      )}
-                    </a>
-                  </div>
-                  {store.indoor_map && (
-                    <div className="storeLocator-indoorMap">
-                      <a target="_blank" href={store.indoor_map}>
-                        <span>{this.props.indoorMapText}</span>
-                      </a>
-                    </div>
-                  )}
-                  <div className="storeLocator-openingTimes">
-                    <ul>
-                      {this.getOpenings(store).map((d) => (
-                        <li>
-                          <span>{d.day}:</span>
-                          {' '}
-                          <span>{d.time || "-"}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </li>
-              );
-            })}
+            {stores !== undefined && stores.length > 0 ?
+              stores.map(store => this.renderStoreListItem(store, activeStoreId)) :
+              this.renderEmptyStoreList()}
           </ul>
         </div>
         <div className={classNames.map} ref={mapFrame => (this.mapFrame = mapFrame)} />

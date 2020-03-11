@@ -180,6 +180,10 @@
     margin-bottom: 0;
   }
 
+  .emptyStoreList {
+    padding: 0 0 0 0;
+  }
+
   .container {
     padding-bottom: 270px;
   }

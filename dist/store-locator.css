@@ -188,6 +188,10 @@
     margin-bottom: 0;
   }
 
+  .storeLocator-emptyStoreList {
+    padding: 0 0 0 0;
+  }
+
   .storeLocator-container {
     padding-bottom: 270px;
   }
