@@ -9,257 +9,204 @@ import Papa from 'papaparse';
 import createHtmlMapMarker from './createHtmlMapMarker';
 
 const units = {
-  METRIC: 0,
-  IMPERIAL: 1
+    METRIC: 0,
+    IMPERIAL: 1
 };
 
-const style = [
-  {
-    width: 30,
-    height: 30,
-    className: 'custom-clustericon-1'
-  },
-  {
-    width: 40,
-    height: 40,
-    className: 'custom-clustericon-2'
-  },
-  {
-    width: 50,
-    height: 50,
-    className: 'custom-clustericon-3'
-  }
+const style = [{
+        width: 30,
+        height: 30,
+        className: 'custom-clustericon-1'
+    },
+    {
+        width: 40,
+        height: 40,
+        className: 'custom-clustericon-2'
+    },
+    {
+        width: 50,
+        height: 50,
+        className: 'custom-clustericon-3'
+    }
 ];
 
-const MAP_STYLES = [
-  {
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#f5f5f5"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.icon",
-    "stylers": [
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#616161"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#f5f5f5"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.country",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#423d36"
-      },
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.land_parcel",
-    "stylers": [
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.land_parcel",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#bdbdbd"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.locality",
-    "stylers": [
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.neighborhood",
-    "stylers": [
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.province",
-    "stylers": [
-      {
-        "visibility": "on"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#eeeeee"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#757575"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.business",
-    "stylers": [
-      {
-        "visibility": "off"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#e5e5e5"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text",
-    "stylers": [
-      {
-        "visibility": "off"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#9e9e9e"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#ffffff"
-      }
-    ]
-  },
-  {
-    "featureType": "road.arterial",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#757575"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#dadada"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#616161"
-      }
-    ]
-  },
-  {
-    "featureType": "road.local",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#9e9e9e"
-      }
-    ]
-  },
-  {
-    "featureType": "transit.line",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#e5e5e5"
-      }
-    ]
-  },
-  {
-    "featureType": "transit.station",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#eeeeee"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#c9c9c9"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry.fill",
-    "stylers": [
-      {
-        "color": "#9fdcff"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#9e9e9e"
-      }
-    ]
-  }
+const MAP_STYLES = [{
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#f5f5f5"
+        }]
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [{
+            "visibility": "on"
+        }]
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#616161"
+        }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{
+            "color": "#f5f5f5"
+        }]
+    },
+    {
+        "featureType": "administrative.country",
+        "elementType": "geometry.stroke",
+        "stylers": [{
+                "color": "#423d36"
+            },
+            {
+                "visibility": "on"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "stylers": [{
+            "visibility": "on"
+        }]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#bdbdbd"
+        }]
+    },
+    {
+        "featureType": "administrative.locality",
+        "stylers": [{
+            "visibility": "on"
+        }]
+    },
+    {
+        "featureType": "administrative.neighborhood",
+        "stylers": [{
+            "visibility": "on"
+        }]
+    },
+    {
+        "featureType": "administrative.province",
+        "stylers": [{
+            "visibility": "on"
+        }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#eeeeee"
+        }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#757575"
+        }]
+    },
+    {
+        "featureType": "poi.business",
+        "stylers": [{
+            "visibility": "off"
+        }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#e5e5e5"
+        }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text",
+        "stylers": [{
+            "visibility": "off"
+        }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#9e9e9e"
+        }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#ffffff"
+        }]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#757575"
+        }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#dadada"
+        }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#616161"
+        }]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#9e9e9e"
+        }]
+    },
+    {
+        "featureType": "transit.line",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#e5e5e5"
+        }]
+    },
+    {
+        "featureType": "transit.station",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#eeeeee"
+        }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{
+            "color": "#c9c9c9"
+        }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry.fill",
+        "stylers": [{
+            "color": "#9fdcff"
+        }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{
+            "color": "#9e9e9e"
+        }]
+    }
 ];
 
 const toMiles = 1.609;
@@ -270,86 +217,87 @@ const GEOLOCATION_ZOOM = 15;
 const IP_LOCATION_ZOOM = 13;
 
 export class StoreLocator extends Component {
-  static defaultProps = {
-    clusters: [],
-    spreadSheetId: null,
-    zoom: 2,
-    clusteringMaxZoom: 9,
-    clusterThresholdZoom: 13,
-    clusterClickZoom: 13,
-    clusterSize: 60,
-    center: undefined,
-    travelMode: 'DRIVING',
-    homeLocationHint: 'Current location',
-    unitSystem: 'METRIC',
-    weekDays: ["Monday", "Tuesday", "Wednesday", "Thurday", "Friday", "Saturday", "Sunday"],
-    farAwayMarkerOpacity: 0.6,
-    fullWidthMap: false,
-    loading: false,
-    language: 'en'
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      searchLocation: null,
-      activeStoreId: null,
-      stores: [],
-      clusters: props.clusters ? this.parseMapPoints(props.clusters) : [],
-      zoom: props.zoom,
-      center: props.center,
-      loading: props.loading,
+    static defaultProps = {
+        clusters: [],
+        spreadSheetId: null,
+        zoom: 2,
+        clusteringMaxZoom: 9,
+        clusterThresholdZoom: 13,
+        clusterClickZoom: 13,
+        clusterSize: 60,
+        center: undefined,
+        travelMode: 'DRIVING',
+        homeLocationHint: 'Current location',
+        unitSystem: 'METRIC',
+        weekDays: ["Monday", "Tuesday", "Wednesday", "Thurday", "Friday", "Saturday", "Sunday"],
+        farAwayMarkerOpacity: 0.6,
+        fullWidthMap: false,
+        loading: false,
+        language: 'en',
+        emptyStoreListText: 'No stores near you'
     };
-    this.markers = [];
-    this.markerClusterer = null;
-    this.language = props.language;
-    this.loadedClusters = false;
-    this.initGeoLocation = null;
-    this.initIpLocation = null;
-  }
 
-  componentDidMount() {
-    this.loadGoogleMaps()
-      .then(this.setupMap);
-  }
-
-  async loadGoogleMaps() {
-    if (window.google && window.google.maps) return Promise.resolve();
-    return loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&language=${this.props.language}&libraries=places`
-    );
-  }
-
-  getMarkerIcon(icon) {
-    if (!icon) return null;
-    const { markerIconSize } = this.props;
-    if (typeof icon === 'string' && markerIconSize) {
-      const iconSize = markerIconSize;
-      return {
-        url: icon,
-        scaledSize: new google.maps.Size(iconSize[0], iconSize[1])
-      };
+    constructor(props) {
+        super(props);
+        this.state = {
+            searchLocation: null,
+            activeStoreId: null,
+            stores: [],
+            clusters: props.clusters ? this.parseMapPoints(props.clusters) : [],
+            zoom: props.zoom,
+            center: props.center,
+            loading: props.loading,
+        };
+        this.markers = [];
+        this.markerClusterer = null;
+        this.language = props.language;
+        this.loadedClusters = false;
+        this.initGeoLocation = null;
+        this.initIpLocation = null;
     }
-    return icon;
-  }
 
-  addStoreMarker = (clustered, store) => {
-    const marker = clustered ? this.createClusteredMarker(store) : this.createRegularMarker(store);
+    componentDidMount() {
+        this.loadGoogleMaps()
+            .then(this.setupMap);
+    }
 
-    if (clustered) {
-      google.maps.event.addListener(marker, 'click', () => {
-        this.map.setCenter(store.location);
-        this.map.setZoom(this.props.clusterClickZoom);
-      });
-    } else {
-      let indoorMapLink = store.indoor_map ?
-        `<a target="_blank" href=${store.indoor_map}>${this.props.indoorMapText}</a>` :
-        ''
+    async loadGoogleMaps() {
+        if (window.google && window.google.maps) return Promise.resolve();
+        return loadScript(
+            `https://maps.googleapis.com/maps/api/js?key=${this.props.apiKey}&language=${this.props.language}&libraries=places`
+        );
+    }
 
-      const locationStr = `${store.lat},${store.lng}`;
+    getMarkerIcon(icon) {
+        if (!icon) return null;
+        const { markerIconSize } = this.props;
+        if (typeof icon === 'string' && markerIconSize) {
+            const iconSize = markerIconSize;
+            return {
+                url: icon,
+                scaledSize: new google.maps.Size(iconSize[0], iconSize[1])
+            };
+        }
+        return icon;
+    }
 
-      const infoWindow = new google.maps.InfoWindow({
-        content: `<div class="storeLocator-infoWindow">
+    addStoreMarker = (clustered, store) => {
+            const marker = clustered ? this.createClusteredMarker(store) : this.createRegularMarker(store);
+
+            if (clustered) {
+                google.maps.event.addListener(marker, 'click', () => {
+                    this.map.setCenter(store.location);
+                    this.map.setZoom(this.props.clusterClickZoom);
+                });
+            } else {
+                let indoorMapLink = store.indoor_map ?
+                    `<a target="_blank" href=${store.indoor_map}>${this.props.indoorMapText}</a>` :
+                    ''
+
+                const locationStr = `${store.lat},${store.lng}`;
+
+                const infoWindow = new google.maps.InfoWindow({
+                            content: `<div class="storeLocator-infoWindow">
             <div class="storeLocator-infoWindow-title">${store.name}</div>
             <div class="storeLocator-infoWindow-address">${store.address}, ${store.city}</div>
             <div class="storeLocator-infoWindow-directions">
@@ -408,13 +356,11 @@ export class StoreLocator extends Component {
   async calculateDistance(searchLocation) {
     if (!searchLocation) return;
 
-    this.setState({ loading: true })
-
     let result = await this.loadDistanceData(searchLocation);
 
     this.refreshMap(false, result);
 
-    this.setState({ stores: result, loading: false });
+    this.setState({ stores: result });
   }
 
   async getDistance(p1, p2) {
@@ -543,6 +489,9 @@ export class StoreLocator extends Component {
   }
 
   async onMoveOrZoom(center, zoom, init) {
+    if (this.state.loading != true) {
+      this.setState({ loading: true });
+    }
     if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
       if (!this.loadedClusters) {
         this.refreshMap(true, this.state.clusters)
@@ -566,15 +515,20 @@ export class StoreLocator extends Component {
 
     if (nextState != null) this.setState({ center: center })
 
+    nextState = {};
     if (this.isClustered(zoom)) {
       this.refreshMap(true, this.state.clusters)
       this.loadedClusters = true;
-      this.setState({ stores: [] })
+      nextState = { stores: [] }
     } else {
       this.loadedClusters = false;
       await this.fetchAndRefreshStoresInBounds(center);
-      this.calculateDistance(this.state.searchLocation);
+      await this.calculateDistance(this.state.searchLocation);
     }
+    if (this.state.loading) {
+      nextState = { ...nextState, ...{ loading: false } }
+    }
+    this.setState(nextState);
   }
 
   async fetchAndRefreshStoresInBounds(center) {
@@ -768,16 +722,26 @@ export class StoreLocator extends Component {
   }
 
   renderEmptyStoreList() {
-    return (<div className={classNames.emptyStoreList}>{this.props.emptyStoreList}</div>)
+    return (<li>
+      <div className={classNames.emptyStoreList}>
+        <p>{this.props.emptyStoreListText}</p>
+      </div>
+    </li>)
+  }
+
+  renderLoadingStores(loading) {
+    let classes = `${classNames.loadingStores}${loading ? ' loading' : ''}`
+    return (<div className={classes}>
+      <p>{this.props.loadingStoresText}</p>
+    </div>)
   }
 
   //noinspection JSCheckFunctionSignatures
-  render({ searchHint, travelMode, fullWidthMap, onInfoIconClick }, { activeStoreId, stores }) {
+  render({ searchHint, fullWidthMap, onInfoIconClick }, { activeStoreId, stores, loading }) {
+    console.log(loading)
     return (
       <div className={cx(classNames.container, { [classNames.fullWidthMap]: fullWidthMap })}>
-        <div className={classNames.loadingStores}>
-          <p>{this.props.loadingStoresText}</p>
-        </div>
+        {this.renderLoadingStores(loading)}
         <div className={classNames.searchBox}>
           <div className={classNames.searchInput}>
             <input type="text" ref={input => (this.input = input)} placeholder={this.props.locationText} />
