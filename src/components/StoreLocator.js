@@ -287,7 +287,7 @@ export class StoreLocator extends Component {
             if (clustered) {
                 google.maps.event.addListener(marker, 'click', () => {
                     this.map.setCenter(store.location);
-                    this.map.setZoom(this.props.clusterClickZoom);
+                    this.map.setZoom(this.map.getZoom() + 2);
                 });
             } else {
                 let indoorMapLink = store.indoor_map ?
@@ -489,16 +489,19 @@ export class StoreLocator extends Component {
   }
 
   async onMoveOrZoom(center, zoom, init) {
-    if (this.state.loading != true) {
-      this.setState({ loading: true });
-    }
+    console.log(`zoom: ${zoom}`)
     if (this.isClustered(zoom) && this.isClustered(this.state.zoom) && !init) {
       if (!this.loadedClusters) {
         this.refreshMap(true, this.state.clusters)
         this.loadedClusters = true;
-        this.setState({ stores: [undefined] })
+        this.setState({ stores: [undefined], loading: false })
+      } else {
+        this.setState({ loading: false })
       }
       return;
+    }
+    if (!this.state.loading) {
+      this.setState({ loading: true });
     }
 
     var nextState = null;
@@ -738,7 +741,6 @@ export class StoreLocator extends Component {
 
   //noinspection JSCheckFunctionSignatures
   render({ searchHint, fullWidthMap, onInfoIconClick }, { activeStoreId, stores, loading }) {
-    console.log(loading)
     return (
       <div className={cx(classNames.container, { [classNames.fullWidthMap]: fullWidthMap })}>
         {this.renderLoadingStores(loading)}
